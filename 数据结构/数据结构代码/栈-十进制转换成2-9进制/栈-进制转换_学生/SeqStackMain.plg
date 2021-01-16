@@ -1,0 +1,25 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: SeqStackMain - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPA663.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Debug/SeqStackMain.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\Old_D\我的资料文件\教学\数据结构\实验\第3章 栈和队列\设计题目与答案\栈-十进制转换成2-9进制\栈-进制转换_学生\SeqStackMain.cpp"
+]
+Creating command line "cl.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPA663.tmp" 
+<h3>Output Window</h3>
+Compiling...
+SeqStackMain.cpp
+
+
+
+<h3>Results</h3>
+SeqStackMain.obj - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

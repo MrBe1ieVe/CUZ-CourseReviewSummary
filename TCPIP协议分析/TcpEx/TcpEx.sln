@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TcpEx_Client", "TcpEx_Client\TcpEx_Client.vcproj", "{A04E9F53-9161-4CC6-BACD-5B8C458590D0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TcpEx_Server", "TcpEx_Server\TcpEx_Server.vcproj", "{AD0CDBB1-B509-4155-9D7F-63D0D29CC668}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A04E9F53-9161-4CC6-BACD-5B8C458590D0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A04E9F53-9161-4CC6-BACD-5B8C458590D0}.Debug|Win32.Build.0 = Debug|Win32
+		{A04E9F53-9161-4CC6-BACD-5B8C458590D0}.Release|Win32.ActiveCfg = Release|Win32
+		{A04E9F53-9161-4CC6-BACD-5B8C458590D0}.Release|Win32.Build.0 = Release|Win32
+		{AD0CDBB1-B509-4155-9D7F-63D0D29CC668}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AD0CDBB1-B509-4155-9D7F-63D0D29CC668}.Debug|Win32.Build.0 = Debug|Win32
+		{AD0CDBB1-B509-4155-9D7F-63D0D29CC668}.Release|Win32.ActiveCfg = Release|Win32
+		{AD0CDBB1-B509-4155-9D7F-63D0D29CC668}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

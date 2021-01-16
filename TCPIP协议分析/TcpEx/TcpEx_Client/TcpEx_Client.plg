@@ -1,0 +1,43 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: TcpEx_Client - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+warning: unresolved Environment Variable  "$(ConfigurationName)"
+warning: unresolved Environment Variable  "$(ConfigurationName)"
+Creating temporary file "C:\Users\hp\AppData\Local\Temp\RSP6B15.tmp" with contents
+[
+/nologo /MD /W3 /GX /Zi /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_UNICODE" /Fo"/" /Fd"/" PRECOMP_VC7_TOBEREMOVED /c 
+"C:\Users\hp\Desktop\TcpEx\TcpEx_Client\TcpEx_Client.cpp"
+]
+Creating command line "cl.exe @C:\Users\hp\AppData\Local\Temp\RSP6B15.tmp" 
+warning: unresolved Environment Variable  "$(SolutionDir)"
+warning: unresolved Environment Variable  "$(ConfigurationName)"
+warning: unresolved Environment Variable  "$(SolutionDir)"
+warning: unresolved Environment Variable  "$(ConfigurationName)"
+Creating temporary file "C:\Users\hp\AppData\Local\Temp\RSP6B16.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"/TcpEx_Client.pdb" /debug /machine:IX86 /out:"/TcpEx_Client.exe" /pdbtype:sept /opt:ref /opt:icf 
+".\$(ConfigurationName)\TcpEx_Client.obj"
+]
+Creating command line "link.exe @C:\Users\hp\AppData\Local\Temp\RSP6B16.tmp"
+<h3>Output Window</h3>
+Compiling...
+Command line warning D4024 : unrecognized source file type 'PRECOMP_VC7_TOBEREMOVED', object file assumed
+Command line warning D4027 : source file 'PRECOMP_VC7_TOBEREMOVED' ignored
+TcpEx_Client.cpp
+C:\Users\hp\Desktop\TcpEx\TcpEx_Client\TcpEx_Client.cpp(82) : warning C4715: 'main' : not all control paths return a value
+Linking...
+LINK : fatal error LNK1104: cannot open file "/TcpEx_Client.exe"
+Ö´ÐÐ link.exe Ê±³ö´í.
+
+
+
+<h3>Results</h3>
+TcpEx_Client.exe - 1 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
