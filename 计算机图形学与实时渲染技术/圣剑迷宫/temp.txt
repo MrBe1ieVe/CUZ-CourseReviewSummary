@@ -1,0 +1,13 @@
+鼠标控制镜头：获取 MouseEvent，获取 x，y 坐标，记录上一次调用函数的时刻，
+
+每秒旋转角度 60.0
+
+再更新动画状态
+
+以下为用到的shader程序和JavaScript程序，程序类型由type属性决定，
+
+顶点Shader程序和片元Shader程序有id，因为在JavaScript程序中需要对其
+
+进行访问，而JavaScript程序无id
+
+计算雾化因子；//受聚光灯影响的衰减系数(1.0不衰减)

@@ -1,0 +1,270 @@
+<!DOCTYPE html>	<!--表示文档类型为HTML文档-->
+<html>
+	<head><!--文档头部-->
+		<!--使用UTF-8字符编码，无此句在某些浏览器会出现乱码-->
+		<meta charset = "utf-8">
+		<!--文档标题，会显示在网页标题栏-->
+		<title>圣剑迷宫</title>
+	</head>
+	
+	<body><!--文档主体-->
+		<!--绘图区域的id，以及宽度和高度，用WebGL绘制的图形将显示在该canvas中-->
+		<canvas id="webgl" width="800" height="600" style="position:absolute;z-index:0">
+		对不起，你的浏览器不支持HTML5的canvas元素！<!--出错时显示这句话-->
+		</canvas>
+
+		<canvas id="hud" width="1200" height="500" style="position:absolute;z-index:1">
+		</canvas>
+	
+		<!--以下为用到的shader程序和JavaScript程序，程序类型由type属性决定，
+		顶点Shader程序和片元Shader程序有id，因为在JavaScript程序中需要对其
+		进行访问，而JavaScript程序无id-->
+		
+		<!--顶点Shader程序-->
+		<script id="vertex-shader" type="x-shader/x-vertex">
+		const int LightNum = 3;		//光源数量
+		
+		attribute vec2 a_Texcoord;	// 顶点纹理坐标
+		attribute vec3 a_Position;	// 输入三维顶点坐标(建模坐标系)
+		attribute vec3 a_Normal;	//顶点法向(建模坐标系)
+		
+		varying vec2 v_Texcoord;	// 输出纹理坐标		
+		varying vec3 v_fN;			//法向(观察坐标系)
+		varying vec3 v_fE;			//观察向量(观察坐标系)
+		varying vec3 v_fL[LightNum];//光照向量(观察坐标系)
+		varying float v_Dist;		//顶点到手电筒光源距离
+		
+		varying float v_Dist2;	//当前点与视点的距离
+
+		uniform mat4 u_ModelView;	//模视矩阵
+		uniform mat4 u_Projection;	//投影矩阵
+		uniform mat3 u_NormalMat;	//法向变换矩阵
+		uniform vec4 u_LightPosition[LightNum];//光源位置/方向(观察坐标系)
+		
+		uniform bool u_bOnlyTexture;//是否只用纹理
+		
+		void main(){
+			v_Texcoord = a_Texcoord;
+			//顶点坐标转到观察坐标系下(在观察坐标系下计算光照)
+			vec3 pos = (u_ModelView * vec4(a_Position, 1.0)).xyz;
+			
+			if(!u_bOnlyTexture){
+				v_fE = normalize(-pos);	//观察者方向向量
+				//计算观察坐标系下法向
+				v_fN = normalize(u_NormalMat * a_Normal);
+				for(int i = 0; i < LightNum; i++){
+					if(u_LightPosition[i].w != 0.0)//近距离光源
+						v_fL[i] = normalize(u_LightPosition[i].xyz - pos);
+					else
+						v_fL[i] = normalize(u_LightPosition[i].xyz);
+				}
+				//计算顶点到手电筒光源的距离
+				v_Dist = distance(pos, u_LightPosition[2].xyz);
+			}
+			// 计算裁剪坐标系下坐标
+			gl_Position = u_Projection * vec4(pos, 1.0);	
+
+			v_Dist2 = gl_Position.w;
+		}
+		</script>
+		<!--片元Shader程序-->
+		<script id="fragment-shader" type="x-shader/x-fragment">
+		const int LightNum = 3;		//光源数量
+		
+		precision mediump float;	// 浮点数精度为中等
+		
+		varying vec2 v_Texcoord;	// 输入片元纹理坐标
+		
+		varying vec3 v_fN;			//法向(观察坐标系)
+		varying vec3 v_fE;			//观察向量(观察坐标系)
+		varying vec3 v_fL[LightNum];//光照向量(观察坐标系)
+		varying float v_Dist;		//片元到手电筒光源距离
+
+		varying float v_Dist2;
+		
+		uniform sampler2D u_Sampler;// 2D纹理采样器
+		uniform float u_Alpha;		//透明度
+		
+		uniform float u_Shininess;	//高光系数
+		//光源亮度与材质反射系数的乘积
+		uniform vec3 u_AmbientProduct[LightNum];
+		uniform vec3 u_DiffuseProduct[LightNum];
+		uniform vec3 u_SpecularProduct[LightNum];
+		uniform vec3 u_Emission;	//发射光属性
+		
+		uniform bool u_LightOn[LightNum];//光源开关
+		uniform bool u_bOnlyTexture;//是否只用纹理
+		
+		//最后一个光源的聚光灯参数
+		uniform vec3 u_SpotDirection;	//聚光灯照射方向(观察坐标系)
+		uniform float u_SpotCutOff;		//聚光灯截止角(角度)
+		uniform float u_SpotExponent;	//聚光灯衰减指数
+		
+		uniform vec3 u_FogColor;	//雾的颜色
+		uniform vec2 u_FogDist;		//雾的起点和终点
+
+
+		void main(){
+			if(u_bOnlyTexture){
+				gl_FragColor = texture2D(u_Sampler, v_Texcoord);
+				//计算雾化因子
+				float fogFactor = clamp((u_FogDist.y - v_Dist2) / 
+					(u_FogDist.y - u_FogDist.x), 0.0, 1.0);
+				vec3 color = mix(u_FogColor, vec3(gl_FragColor), fogFactor);
+				gl_FragColor = vec4(color, gl_FragColor.a);
+
+				return;
+			}
+			//归一化输入的向量
+			vec3 N = normalize(v_fN);
+			vec3 E = normalize(v_fE);
+			
+			//用于累加的光照颜色，初始为0
+			vec3 fragColor = vec3(0.0, 0.0, 0.0);
+			vec3 specular = vec3(0.0, 0.0, 0.0);//镜面光分量单独累加
+			//针对每一个光源进行光照计算并累加到fragColor上
+			for(int i = 0; i < LightNum; i++){
+				if(!u_LightOn[i]) continue;
+				vec3 L = normalize(v_fL[i]);
+				vec3 H = normalize(L + E);		//半角向量
+				
+				float KSpot = 1.0;	//受聚光灯影响的衰减系数(1.0不衰减)
+				if(i == 2){
+					//对照射方向归一化并反向(因L也是从顶点指向光源)
+					vec3 spotDir = -normalize(u_SpotDirection);
+					float cutoff = radians(u_SpotCutOff);
+					float c = dot(L, spotDir);
+					if(c < cos(cutoff))
+						KSpot = 0.0;
+					else{
+						float d = 1.0 + 0.5 * v_Dist;
+						KSpot = max(pow(c, u_SpotExponent), 0.0) / d;
+					}
+				}
+				//环境反射分量
+				vec3 ambient = u_AmbientProduct[i];
+				//漫反射分量
+				float Kd = max(dot(L, N), 0.0);
+				vec3 diffuse = KSpot * Kd * u_DiffuseProduct[i];
+				//镜面反射分量
+				vec3 specular;
+				if(Kd != 0.0){
+					float Ks = pow(max(dot(N, H), 0.0), u_Shininess);
+					specular += KSpot * Ks * u_SpecularProduct[i];
+				}
+				//得到最终颜色
+				fragColor += ambient + diffuse;
+			}
+			fragColor += u_Emission;//加上物体自身的发射光
+			gl_FragColor = vec4(fragColor, 1.0) * 
+				texture2D(u_Sampler, v_Texcoord) + vec4(specular, 1.0);
+			gl_FragColor.a = u_Alpha;
+
+			//计算雾化因子
+				float fogFactor = clamp((u_FogDist.y - v_Dist2) / 
+					(u_FogDist.y - u_FogDist.x), 0.0, 1.0);
+				vec3 color = mix(u_FogColor, vec3(gl_FragColor), fogFactor);
+				gl_FragColor = vec4(color, gl_FragColor.a);
+		}
+		</script>
+		
+		<!--新的片元Shader程序(用于绘制Obj模型)-->
+		<script id="fragment-shaderNew" type="x-shader/x-fragment">		
+		const int LightNum = 3;		//光源数量	
+		precision mediump float;	// 浮点数精度为中等
+		varying vec2 v_Texcoord;	// 输入片元纹理坐标	
+		varying vec3 v_fN;			//法向(观察坐标系)
+		varying vec3 v_fE;			//观察向量(观察坐标系)
+		varying vec3 v_fL[LightNum];//光照向量(观察坐标系)
+		varying float v_Dist;		//片元到手电筒光源距离
+		varying float v_Dist2;
+		
+		//3个光源的环境光、漫反射光、镜面反射光
+		uniform vec3 u_AmbientLight[LightNum];
+		uniform vec3 u_DiffuseLight[LightNum];
+		uniform vec3 u_SpecularLight[LightNum];
+		//物体材质
+		uniform vec3 u_Ka;	//环境光反射系数
+		uniform vec3 u_Kd;	//漫反射系数
+		uniform vec3 u_Ks;	//镜面反射系数
+		uniform vec3 u_Ke;	//发射系数
+		uniform float u_Ns;	//高光系数
+		uniform float u_d;	//透明度
+
+		uniform sampler2D u_Sampler;// 2D纹理采样器
+		uniform bool u_LightOn[LightNum];//光源开关
+		
+		//最后一个光源的聚光灯参数
+		uniform vec3 u_SpotDirection;	//聚光灯照射方向(观察坐标系)
+		uniform float u_SpotCutOff;		//聚光灯截止角(角度)
+		uniform float u_SpotExponent;	//聚光灯衰减指数
+		
+		uniform vec3 u_FogColor;	//雾的颜色
+		uniform vec2 u_FogDist;		//雾的起点和终点
+
+
+		void main(){
+			//归一化输入的向量
+			vec3 N = normalize(v_fN);
+			vec3 E = normalize(v_fE);
+			
+			//用于累加的光照颜色，初始为0
+			vec3 fragColor = vec3(0.0, 0.0, 0.0);
+			vec3 specular = vec3(0.0, 0.0, 0.0);//镜面光分量单独累加
+			//针对每一个光源进行光照计算并累加到fragColor上
+			for(int i = 0; i < LightNum; i++){
+				if(!u_LightOn[i]) continue;
+				vec3 L = normalize(v_fL[i]);
+				vec3 H = normalize(L + E);		//半角向量
+				
+				float KSpot = 1.0;	//受聚光灯影响的衰减系数(1.0不衰减)
+				if(i == 2){
+					//对照射方向归一化并反向(因L也是从顶点指向光源)
+					vec3 spotDir = -normalize(u_SpotDirection);
+					float cutoff = radians(u_SpotCutOff);
+					float c = dot(L, spotDir);
+					if(c < cos(cutoff))
+						KSpot = 0.0;
+					else{
+						float d = 1.0 + 0.5 * v_Dist;
+						KSpot = max(pow(c, u_SpotExponent), 0.0) / d;
+					}
+				}
+				//环境反射分量
+				vec3 ambient = u_AmbientLight[i] * u_Ka;
+				//漫反射分量
+				float Fd = max(dot(L, N), 0.0);
+				vec3 diffuse = KSpot * Fd * u_DiffuseLight[i] * u_Kd;
+				//镜面反射分量
+				vec3 specular;
+				if(Fd != 0.0){
+					float Fs = pow(max(dot(N, H), 0.0), u_Ns);
+					specular += KSpot * Fs * u_SpecularLight[i] * u_Ks;
+				}
+				//得到最终颜色
+				fragColor += ambient + diffuse;
+			}
+			fragColor += u_Ke;//加上物体自身的发射光
+			//最终片元颜色
+			gl_FragColor = vec4(fragColor, 1.0) * 
+				texture2D(u_Sampler, v_Texcoord) + vec4(specular, 1.0);
+			gl_FragColor.a = u_d;
+
+			//计算雾化因子
+			float fogFactor = clamp((u_FogDist.y - v_Dist2) / 
+					(u_FogDist.y - u_FogDist.x), 0.0, 1.0);
+			vec3 color = mix(u_FogColor, vec3(gl_FragColor), fogFactor);
+			gl_FragColor = vec4(color, gl_FragColor.a);
+		}
+		</script>
+		
+		
+		<!--下面是辅助我们进行程序编写的3个JavaScript程序-->
+		<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+		<script type="text/javascript" src="./Common/initShaders.js"></script>
+		<script type="text/javascript" src="./Common/MV.js"></script>
+		<script type="text/javascript" src="./Common/ObjModel.js"></script>
+		<!--主程序-->
+		<script type="text/javascript" src="42MyScene.js"></script>
+	</body>
+</html>
